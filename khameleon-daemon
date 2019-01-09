@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+
+# khameleon-daemon is designed to run in the background as a startup script
+# that watches files for changes
+
+import khameleon
+import inotify.adapters
+
+notifier = inotify.adapters.INotify()
+kha = kameleon.Khameleon()
