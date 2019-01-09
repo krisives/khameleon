@@ -22,7 +22,7 @@ def update(kha):
 In all of the functions declared here `kha` is a handle to the `Khameleon`
 object.
 
-### is_active(kha)
+### check_active(kha)
 
 Check if an app is installed and therefor the plugin should be active. Most of
 the time this should end up calling `kha.is_installed('something')` where
