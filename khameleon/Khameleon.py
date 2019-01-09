@@ -5,7 +5,7 @@ class Khameleon:
     config = None
     config_changed = False
     plugins = []
-    is_light_theme = False
+    current_theme_is_dark = False
     current_color_theme = None
     dark_color_theme = None
     light_color_theme = None
@@ -18,17 +18,17 @@ class Khameleon:
             print("ERROR: Cannot determine current color theme")
             return
 
-        self.is_light_theme = ('dark' not in self.current_color_theme.lower())
+        self.current_theme_is_dark = self.is_dark_theme(self.current_color_theme)
 
-        if self.is_light_theme:
-            self.light_color_theme = self.current_color_theme
-            self.dark_color_theme = self.find_opposite_theme(self.light_color_theme, 'light', 'dark')
-        else:
+        if self.current_theme_is_dark:
             self.dark_color_theme = self.current_color_theme
             self.light_color_theme = self.find_opposite_theme(self.dark_color_theme, 'dark', 'light')
+        else:
+            self.light_color_theme = self.current_color_theme
+            self.dark_color_theme = self.find_opposite_theme(self.light_color_theme, 'light', 'dark')
 
         print("current theme: ", self.current_color_theme)
-        print("is light theme? ", self.is_light_theme)
+        print("is dark theme? ", self.current_theme_is_dark)
         print("dark theme: ", self.dark_color_theme)
         print("light theme: ", self.light_color_theme)
 
@@ -37,6 +37,7 @@ class Khameleon:
         for plugin in self.plugins:
             plugin.update(self)
 
+        print("has changes?", self.config_changed)
         self.config.write(open('test.ini', 'w'), False)
 
     def load_plugins(self):
@@ -71,6 +72,12 @@ class Khameleon:
         count = self.config.getint('General', 'count')
         wmclass = params.get('wmclass')
         found = self.find_rule(params)
+        decocolor = ''
+        decocolorrule = 0
+
+        if self.current_theme_is_dark != params.get('dark', False):
+            decocolor = 'BreezeDark'
+            decocolorrule = 2
 
         if found == None:
             found = str(count + 1)
@@ -78,29 +85,33 @@ class Khameleon:
             self.config.set(found, 'Description', wmclass + ' (khameleon)')
             self.config.set('General', 'count', found)
 
-        self.config.set(found, 'titlematch', str(0))
-        self.config.set(found, 'wmclass', wmclass)
-        self.config.set(found, 'wmclassmatch', str(1))
-        self.config.set(found, 'wmclasscomplete', 'false')
-
-        if params.get('dark', False):
-            self.config.set(found, 'decocolor', 'BreezeDark')
-            self.config.set(found, 'decocolorrule', str(2))
-        else:
-            self.config.set(found, 'decocolorrule', str(0))
-            self.config.set(found, 'decocolor', '')
-
-        # print(params)
+        self.change_rule(found, {
+            'titlematch': str(0),
+            'wmclass': wmclass,
+            'wmclassmatch': str(1),
+            'wmclasscomplete': 'false',
+            'decocolor': str(decocolor),
+            'decocolorrule': str(decocolorrule)
+        })
 
     def find_rule(self, params):
         count = self.config.getint('General', 'count')
         wmclass = params.get('wmclass')
 
-        for i in range(1, count):
+        for i in range(1, 1 + count):
             section = self.config[str(i)]
+            print("test", section.get('wmclass'), ' == ', wmclass)
 
             if section.get('wmclass') == wmclass:
                 return str(i)
+
+    def change_rule(self, rule, changes):
+        for key, value in changes.items():
+            current = self.config.get(rule, key, fallback=None)
+
+            if current != value:
+                self.config_changed = True
+                self.config.set(rule, key, value)
 
     def check_installed(self, program):
         result = subprocess.run(['which', program], stdout=subprocess.PIPE)
