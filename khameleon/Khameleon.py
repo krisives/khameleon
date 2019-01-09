@@ -69,15 +69,8 @@ class Khameleon:
     def rule(self, **params):
         print(params)
         count = self.config.getint('General', 'count')
-        found = None
         wmclass = params.get('wmclass')
-
-        for i in range(1, count):
-            section = self.config[str(i)]
-
-            if section.get('wmclass') == wmclass:
-                found = str(i)
-                break
+        found = self.find_rule(params)
 
         if found == None:
             found = str(count + 1)
@@ -100,7 +93,8 @@ class Khameleon:
         # print(params)
 
     def find_rule(self, params):
-        wmclass = section.get('wmclass')
+        count = self.config.getint('General', 'count')
+        wmclass = params.get('wmclass')
 
         for i in range(1, count):
             section = self.config[str(i)]
