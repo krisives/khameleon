@@ -1,6 +1,19 @@
 
-`khameleon` creates window rules and color themes for KDE to match the look
+Khameleon creates window rules and color themes for KDE to match the look
 of popular Linux apps.
+
+## Basic Usage
+
+Khameleon comes with two basic commands:
+
+* `khameleon-update` generates any window rules based
+* `khameleon-daemon` waits for any config files to change and updates window
+  rules on demand
+
+## Requirements
+
+* Python 3
+* `pip install inotify`
 
 ## Add an App
 
