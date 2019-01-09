@@ -100,7 +100,6 @@ class Khameleon:
 
         for i in range(1, 1 + count):
             section = self.config[str(i)]
-            print("test", section.get('wmclass'), ' == ', wmclass)
 
             if section.get('wmclass') == wmclass:
                 return str(i)
