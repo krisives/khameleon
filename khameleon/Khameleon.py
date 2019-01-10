@@ -1,5 +1,10 @@
 
-import os, pkgutil, importlib, configparser, subprocess
+import sys, os, pkgutil, importlib, configparser, subprocess
+
+try:
+    import dbus
+except ImportError:
+    dbus = None
 
 class Khameleon:
     config = None
@@ -9,6 +14,14 @@ class Khameleon:
     current_color_theme = None
     dark_color_theme = None
     light_color_theme = None
+    options = None
+
+    def __init__(self, options):
+        self.options = options
+
+    def debug(self, *args, **kwargs):
+        if self.options.debug:
+            print(*args, file=sys.stderr, **kwargs)
 
     def run(self):
         self.load_plugins()
@@ -27,18 +40,24 @@ class Khameleon:
             self.light_color_theme = self.current_color_theme
             self.dark_color_theme = self.find_opposite_theme(self.light_color_theme, 'light', 'dark')
 
-        print("current theme: ", self.current_color_theme)
-        print("is dark theme? ", self.current_theme_is_dark)
-        print("dark theme: ", self.dark_color_theme)
-        print("light theme: ", self.light_color_theme)
+        self.debug("current theme is ", self.current_color_theme)
+        self.debug("is dark theme? ", self.current_theme_is_dark)
+        self.debug("dark theme: ", self.dark_color_theme)
+        self.debug("light theme: ", self.light_color_theme)
 
-        self.config = self.load_ini("~/.config/kwinrulesrc")
+        self.config = self.load_ini(self.options.rules)
 
         for plugin in self.plugins:
+            self.debug("Running plugin ", plugin.__name__)
             plugin.update(self)
 
-        print("has changes?", self.config_changed)
-        self.config.write(open('test.ini', 'w'), False)
+        self.debug("Config has changes" if self.config_changed else "Config has no changes")
+
+        if self.config_changed:
+            self.config.write(open(os.path.expanduser(self.options.rulesout), 'w'), False)
+
+            if not self.options.nosignal:
+                self.emit_signal()
 
     def load_plugins(self):
         for module in pkgutil.iter_modules([os.path.dirname(__file__) + "/plugins"]):
@@ -68,7 +87,7 @@ class Khameleon:
         return theme
 
     def rule(self, **params):
-        print(params)
+        self.debug("Updating rule", params)
         count = self.config.getint('General', 'count')
         wmclass = params.get('wmclass')
         found = self.find_rule(params)
@@ -82,14 +101,16 @@ class Khameleon:
         if found == None:
             found = str(count + 1)
             self.config.add_section(found)
-            self.config.set(found, 'Description', wmclass + ' (khameleon)')
+            self.change_rule(found, {
+                'Description': wmclass + ' (khameleon)',
+                'titlematch': str(0),
+                'wmclass': wmclass,
+                'wmclassmatch': str(1),
+                'wmclasscomplete': 'false',
+            })
             self.config.set('General', 'count', found)
 
         self.change_rule(found, {
-            'titlematch': str(0),
-            'wmclass': wmclass,
-            'wmclassmatch': str(1),
-            'wmclasscomplete': 'false',
             'decocolor': str(decocolor),
             'decocolorrule': str(decocolorrule)
         })
@@ -132,3 +153,11 @@ class Khameleon:
             return True
 
         return False
+
+    def emit_signal(self):
+        if not dbus:
+            return;
+
+        bus = dbus.SessionBus()
+        msg = dbus.lowlevel.SignalMessage(path='/KWin', interface='org.kde.KWin', name='reloadConfig')
+        bus.send_message(msg)
