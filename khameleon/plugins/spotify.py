@@ -1,6 +1,6 @@
 
 def check_active(kha):
-    return kha.is_installed('spotify')
+    return kha.check_installed('spotify')
 
 def get_files(kha):
     return []

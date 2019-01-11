@@ -21,8 +21,8 @@ Don't see your favorite app? Create a new file inside the `plugins/` directory
 with contents like this:
 
 ```python
-def is_active(kha):
-  return kha.is_installed('someapp')
+def check_active(kha):
+  return kha.check_installed('someapp')
 
 def get_files(kha):
   return ['~/somefile']
@@ -38,7 +38,7 @@ object.
 ### check_active(kha)
 
 Check if an app is installed and therefor the plugin should be active. Most of
-the time this should end up calling `kha.is_installed('something')` where
+the time this should end up calling `kha.check_installed('something')` where
 `something` is the Linux command that would run the app. This helps avoid
 creating window rules that aren't going to be used.
 
@@ -67,7 +67,7 @@ dark        | Set if the window should have the default dark theme
 decocolor   | Set if you want to apply a specific color scheme
 
 
-### Khameleon.is_installed(self, program)
+### Khameleon.check_installed(self, program)
 
 Check if a program is installed essentially calls `which program` to determine
 if the command exists.

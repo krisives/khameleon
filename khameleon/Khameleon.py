@@ -49,7 +49,9 @@ class Khameleon:
 
         for plugin in self.plugins:
             self.debug("Running plugin ", plugin.__name__)
-            plugin.update(self)
+            
+            if plugin.check_active(self):
+                plugin.update(self)
 
         self.debug("Config has changes" if self.config_changed else "Config has no changes")
 

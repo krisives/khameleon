@@ -1,5 +1,5 @@
 
-def is_active(kha):
+def check_active(kha):
     return False
 
 def get_files(kha):
