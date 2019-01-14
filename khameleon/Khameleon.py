@@ -1,5 +1,5 @@
 
-import sys, os, pkgutil, importlib, configparser, subprocess
+import sys, os, pkgutil, importlib, configparser, subprocess, argparse
 
 try:
     import dbus
@@ -19,11 +19,27 @@ class Khameleon:
     def __init__(self, options):
         self.options = options
 
+    def parse_args():
+        parser = argparse.ArgumentParser(description='Update window rules')
+        parser.add_argument('--rules', dest='rules', default='~/.config/kwinrulesrc',
+            help='Input file for KDE window rules (default: ~/.config/kwinrulesrc)')
+        parser.add_argument('--rulesout', dest='rulesout', default='~/.config/kwinrulesrc',
+            help='Output file for KDE window rules (default: ~/.config/kwinrulesrc)')
+        parser.add_argument('--nosignal', dest='nosignal', action='store_true',
+            help='Skip sending the KDE reloadConfig signal')
+        parser.add_argument('--debug', dest='debug', action='store_true',
+            help='Enable debugging output')
+        return parser.parse_args()
+
     def debug(self, *args, **kwargs):
         if self.options.debug:
             print(*args, file=sys.stderr, **kwargs)
 
     def run(self):
+        self.start()
+        self.update()
+
+    def start(self):
         self.load_plugins()
         self.current_color_theme = self.get_current_color_theme()
 
@@ -47,9 +63,10 @@ class Khameleon:
 
         self.config = self.load_ini(self.options.rules)
 
+    def update(self):
         for plugin in self.plugins:
             self.debug("Running plugin ", plugin.__name__)
-            
+
             if plugin.check_active(self):
                 plugin.update(self)
 
@@ -92,15 +109,19 @@ class Khameleon:
         self.debug("Updating rule", params)
         count = self.config.getint('General', 'count')
         wmclass = params.get('wmclass')
+        dark = bool(params.get('dark', False))
         found = self.find_rule(params)
         decocolor = ''
         decocolorrule = 0
 
-        if self.current_theme_is_dark != params.get('dark', False):
+        if self.current_theme_is_dark != dark:
             decocolor = 'BreezeDark'
             decocolorrule = 2
 
         if found == None:
+            if (dark == self.current_theme_is_dark):
+                return
+
             found = str(count + 1)
             self.config.add_section(found)
             self.change_rule(found, {

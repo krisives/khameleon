@@ -3,8 +3,27 @@
 # khameleon-daemon is designed to run in the background as a startup script
 # that watches files for changes
 
-import khameleon
+import khameleon, os
 import inotify.adapters
 
-notifier = inotify.adapters.INotify()
-kha = kameleon.Khameleon()
+notifier = inotify.adapters.Inotify()
+args = khameleon.Khameleon.parse_args()
+kha = khameleon.Khameleon(args)
+mask = inotify.constants.IN_MODIFY | inotify.constants.IN_CREATE
+
+kha.start()
+
+for plugin in kha.plugins:
+    if not plugin.check_active(kha): continue
+
+    for path in plugin.get_files(kha):
+        path = os.path.expanduser(path)
+        notifier.add_watch(path, mask)
+
+for event in notifier.event_gen(yield_nones=False):
+    path = event[2]
+    filename = event[3]
+    if filename: path = os.path.join(path, filename)
+    if kha.options.debug: print(event)
+    kha.update()
+    notifier.add_watch(path, mask)

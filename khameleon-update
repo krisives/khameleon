@@ -1,16 +1,7 @@
 #!/usr/bin/env python3
 
-import khameleon, argparse
+import khameleon
 
-parser = argparse.ArgumentParser(description='Update window rules')
-parser.add_argument('--rules', dest='rules', default='~/.config/kwinrulesrc',
-    help='Input file for KDE window rules (default: ~/.config/kwinrulesrc)')
-parser.add_argument('--rulesout', dest='rulesout', default='~/.config/kwinrulesrc',
-    help='Output file for KDE window rules (default: ~/.config/kwinrulesrc)')
-parser.add_argument('--nosignal', dest='nosignal', action='store_true',
-    help='Skip sending the KDE reloadConfig signal')
-parser.add_argument('--debug', dest='debug', action='store_true',
-    help='Enable debugging output')
-
-kha = khameleon.Khameleon(parser.parse_args())
+args = khameleon.Khameleon.parse_args()
+kha = khameleon.Khameleon(args)
 kha.run()
