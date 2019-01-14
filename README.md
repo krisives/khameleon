@@ -13,7 +13,32 @@ Khameleon comes with two basic commands:
 ## Requirements
 
 * Python 3
-* `pip install inotify`
+* `pip3 install inotify`
+* `pip3 install dbus`
+
+## FAQ
+
+### Will Khameleon work with my existing window rules?
+
+Yes. Khameleon looks for for KDE window rules where the window class (`wmclass`)
+matching method is being used, which is how most window rules using the GUI are
+created when using the detector tool.
+
+### How can I easily remove all the rules created by Khameleon?
+
+All rules Khameleon creates will contain the suffix `(khameleon)` making it
+easy to cleanup using the GUI tool if desired. There may be a companion helper
+script such as `khameleon-cleanup` or similar in the future.
+
+### Will Khameleon update window rules if I switch between dark and light themes?
+
+Yes. Khameleon is designed to check if you are using a light or dark theme and
+then detect if supported apps are dark or light then update window rules such
+that they all match.
+
+### Can I use Khameleon without running the daemon?
+
+Yes. Simply run `khameleon-update` whenever you want manually.
 
 ## Add an App
 
